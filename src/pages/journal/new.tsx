@@ -6,8 +6,18 @@ import 'react-quill/dist/quill.snow.css';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 const DRAFT_KEY = 'journal-draft';
+const TITLE_KEY = 'journal-title-draft';
+
+function getTodayDateString() {
+  return new Date().toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
 
 export default function NewJournalEntry() {
+  const [title, setTitle] = useState<string>(getTodayDateString());
   const [content, setContent] = useState<string>('');
   const [saved, setSaved] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -19,15 +29,24 @@ export default function NewJournalEntry() {
     }
   }, [content]);
 
+  useEffect(() => {
+    if (title) {
+      localStorage.setItem(TITLE_KEY, title);
+    }
+  }, [title]);
+
   // On mount, check for draft and ask to restore
   useEffect(() => {
     const draft = localStorage.getItem(DRAFT_KEY);
-    if (draft) {
+    const titleDraft = localStorage.getItem(TITLE_KEY);
+    if (draft || titleDraft) {
       const shouldRestore = window.confirm('A draft was found. Restore it?');
       if (shouldRestore) {
-        setContent(draft);
+        if (draft) setContent(draft);
+        if (titleDraft) setTitle(titleDraft);
       } else {
         localStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(TITLE_KEY);
       }
     }
   }, []);
@@ -35,18 +54,20 @@ export default function NewJournalEntry() {
   function handleSaveDraft(e: React.FormEvent) {
     e.preventDefault();
     localStorage.setItem(DRAFT_KEY, content);
+    localStorage.setItem(TITLE_KEY, title);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from('entries').insert({ content });
+    const { error } = await supabase.from('entries').insert({ title, content });
     if (!error) {
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 2000);
-      // Optionally clear the draft after successful submit
-      // localStorage.removeItem(DRAFT_KEY);
+      // clear the draft after successful submit
+      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(TITLE_KEY);
     } else {
       alert('Error saving entry');
     }
@@ -56,6 +77,13 @@ export default function NewJournalEntry() {
     <div className="min-h-screen bg-gray-50 p-8">
       <h2 className="text-2xl font-semibold mb-4">New Journal Entry</h2>
       <form className="flex flex-col gap-4">
+        <input
+          type="text"
+          className="border rounded px-3 py-2 text-lg font-medium"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          placeholder="Entry Title"
+        />
         <ReactQuill
           value={content}
           onChange={setContent}
