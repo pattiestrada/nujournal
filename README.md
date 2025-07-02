@@ -33,14 +33,14 @@ This project uses **Next.js** and **Supabase** to create a secure, simple, and e
 ```bash
 git clone https://github.com/pattiestrada/nujournal.git
 cd nujournal
-
+```
 
 ### 2. Run the development server
 
 ```bash
 npm install
 npm run dev
-
+```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
