@@ -10,6 +10,7 @@ const TITLE_KEY = 'journal-title-draft';
 
 function getTodayDateString() {
   return new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -39,7 +40,7 @@ export default function NewJournalEntry() {
   useEffect(() => {
     const draft = localStorage.getItem(DRAFT_KEY);
     const titleDraft = localStorage.getItem(TITLE_KEY);
-    if (draft || titleDraft) {
+    if (draft) {
       const shouldRestore = window.confirm('A draft was found. Restore it?');
       if (shouldRestore) {
         if (draft) setContent(draft);
